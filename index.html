@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kỷ Yếu Lớp V26 - Mobile Ready</title>
+    <title>Kỷ Yếu Lớp V27 - Admin Update</title>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.4.2.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Quicksand:wght@400;500;600&family=Indie+Flower&family=Patrick+Hand&display=swap" rel="stylesheet">
     <style>
-        /* --- 1. CẤU HÌNH CHUNG (GIỮ NGUYÊN) --- */
+        /* --- 1. CẤU HÌNH CHUNG --- */
         :root {
             --bg-fallback: #F9F1F0; --accent: #D4A59A; --accent-dark: #8E6C65;    
             --text: #5E4B45; --card: rgba(255, 255, 255, 0.95);
+            --chat-bg: rgba(255, 255, 255, 0.85);
+            --chat-me: #D4A59A; --chat-other: #f0f2f5;
         }
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; user-select: none; }
         body {
             background-color: var(--bg-fallback); background-position: center; background-size: cover; 
             background-attachment: fixed; color: var(--text); font-family: 'Quicksand', sans-serif;
             min-height: 100vh; display: flex; flex-direction: column; align-items: center;
             overflow-x: hidden; margin: 0; transition: background-image 0.8s ease-in-out; position: relative;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23D4A59A"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'), auto;
         }
         .animate-up { animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; transform: translateY(30px); }
         @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
@@ -24,7 +28,7 @@
 
         /* --- DECORATION --- */
         .sticker-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: hidden; }
-        .sticker { position: absolute; font-size: 2.5rem; opacity: 0.9; filter: drop-shadow(3px 5px 2px rgba(0,0,0,0.15)); transition: transform 0.4s; font-family: 'Segoe UI Emoji'; cursor: default; pointer-events: auto; }
+        .sticker { position: absolute; font-size: 2.5rem; opacity: 0.9; filter: drop-shadow(3px 5px 2px rgba(0,0,0,0.15)); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: 'Segoe UI Emoji'; cursor: default; pointer-events: auto; }
         .washi-tape { position: absolute; width: 120px; height: 30px; background-color: rgba(255, 200, 200, 0.7); transform: rotate(-25deg); z-index: 5; backdrop-filter: blur(2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); pointer-events: auto; transition: transform 0.3s; }
 
         /* Header */
@@ -36,7 +40,7 @@
             animation: shimmer 3s infinite linear;
         }
         @keyframes shimmer { to { background-position: 200% center; } }
-        .bg-btn { margin-top: 15px; padding: 10px 25px; background: rgba(255,255,255,0.8); border: 1px solid var(--accent); border-radius: 30px; color: var(--accent-dark); font-weight: 600; cursor: pointer; display: none; box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
+        .bg-btn { margin-top: 15px; padding: 10px 25px; background: rgba(255,255,255,0.8); border: 1px solid var(--accent); border-radius: 30px; color: var(--accent-dark); font-weight: 600; cursor: pointer; display: none; box-shadow: var(--shadow-soft); }
         body.is-admin .bg-btn { display: inline-block; }
         .class-frame { width: 100%; height: 450px; background: #fff; border-radius: 20px; margin-top: 40px; box-shadow: 0 20px 50px rgba(142, 108, 101, 0.2); position: relative; overflow: hidden; border: 8px solid rgba(255,255,255,0.6); z-index: 10; }
         .class-frame img { width: 100%; height: 100%; object-fit: cover; transition: 1s; }
@@ -54,13 +58,45 @@
         .note { background: rgba(255, 253, 240, 0.9); padding: 20px; border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0; box-shadow: 0 5px 10px rgba(0,0,0,0.1); font-style: italic; color: #666; transition: 0.3s; }
         .note:hover { transform: translateX(10px); background: #fff; }
 
-        /* Search & Grid (CẬP NHẬT MOBILE) */
+        /* Chat System */
+        .chat-section { width: 100%; max-width: 900px; margin: 0 auto 50px; padding: 0 20px; position: relative; z-index: 15; }
+        .chat-container { background: var(--chat-bg); border-radius: 25px; box-shadow: 0 25px 60px rgba(0,0,0,0.15); overflow: hidden; border: 1px solid rgba(255,255,255,0.6); backdrop-filter: blur(15px); display: flex; flex-direction: column; height: 600px; }
+        .chat-login-view { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #fff5f3; gap: 20px; padding: 30px; }
+        .chat-input { padding: 15px 25px; border: 2px solid #eee; border-radius: 50px; width: 280px; text-align: center; outline: none; transition: 0.3s; font-size: 1rem; background: rgba(255,255,255,0.8); }
+        .chat-input:focus { border-color: var(--accent); background: #fff; }
+        .btn-chat { padding: 12px 40px; background: var(--accent); color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 1rem; box-shadow: 0 5px 15px rgba(212, 165, 154, 0.4); }
+        .btn-chat:hover { transform: translateY(-3px); background: var(--accent-dark); }
+        .chat-main-view { display: none; flex-direction: column; height: 100%; }
+        .chat-header { padding: 20px 30px; background: rgba(212, 165, 154, 0.9); color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 5; }
+        .chat-logout { font-size: 0.9rem; cursor: pointer; opacity: 0.9; border: 1px solid white; padding: 5px 15px; border-radius: 20px; transition: 0.2s; }
+        .chat-logout:hover { background: white; color: var(--accent); }
+        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background: rgba(255,255,255,0.5); display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        .chat-messages::-webkit-scrollbar { width: 8px; } .chat-messages::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); } .chat-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .msg-row { display: flex; width: 100%; align-items: flex-end; margin-bottom: 5px; }
+        .msg-row.me { justify-content: flex-end; } .msg-row.other { justify-content: flex-start; }
+        .msg-bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; position: relative; word-break: break-word; overflow-wrap: break-word; box-shadow: 0 2px 5px rgba(0,0,0,0.05); animation: popIn 0.3s ease; }
+        @keyframes popIn { from{transform: scale(0.8); opacity:0;} to{transform: scale(1); opacity:1;} }
+        .msg-me .msg-bubble { background: var(--chat-me); color: white; border-bottom-right-radius: 4px; }
+        .msg-other .msg-bubble { background: var(--chat-other); color: #1c1e21; border-bottom-left-radius: 4px; }
+        .msg-sender-name { font-size: 0.7rem; color: #888; margin-bottom: 2px; margin-left: 10px; display: block; font-weight: bold; }
+        .chat-avatar-small { width: 30px; height: 30px; border-radius: 50%; margin-right: 8px; background: #ddd; object-fit: cover; border: 2px solid white; }
+        .chat-footer { background: #fff; border-top: 1px solid #eee; padding: 15px; }
+        .reply-preview-bar { background: #f0f2f5; padding: 8px 15px; border-radius: 10px; margin-bottom: 10px; display: none; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #65676b; border-left: 4px solid var(--accent); }
+        .input-group { display: flex; gap: 10px; align-items: center; }
+        .msg-input { flex-grow: 1; padding: 12px 20px; border: 2px solid #eee; border-radius: 25px; outline: none; font-family: inherit; font-size: 0.95rem; }
+        .msg-input:focus { border-color: var(--accent); background: #fffcfc; }
+        .btn-send { width: 45px; height: 45px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-send:hover { transform: scale(1.1); background: var(--accent-dark); }
+
+        /* Search & Grid */
         .search-bar-container { width: 100%; max-width: 600px; margin: 0 auto 40px; padding: 0 20px; position: relative; z-index: 20; }
-        .search-input { width: 100%; padding: 15px 25px; border-radius: 50px; border: 2px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-family: 'Quicksand', sans-serif; font-size: 1.1rem; color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: 0.3s; }
+        .search-input { width: 100%; padding: 15px 25px; border-radius: 50px; border: 2px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-family: 'Quicksand', sans-serif; font-size: 1.1rem; color: var(--text); box-shadow: var(--shadow-soft); transition: 0.3s; }
         .search-input:focus { border-color: var(--accent); transform: scale(1.02); }
         
         .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; width: 100%; max-width: 1400px; padding: 20px; margin-bottom: 100px; z-index: 10; }
-        
+        @media (max-width: 1200px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
         .card { background: var(--card); border-radius: 20px; padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); position: relative; border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(5px); cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(212, 165, 154, 0.3); border-color: var(--accent); }
         .c-avatar { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.4s; }
@@ -68,24 +104,22 @@
         .c-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .c-name { text-align: center; font-weight: 700; font-size: 1rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Profile Modal (RESPONSIVE) */
+        /* Profile Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); z-index: 2000; display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .profile-box { max-width: 1100px; margin: 40px auto; background: #fff; border-radius: 30px; box-shadow: 0 30px 80px rgba(0,0,0,0.2); display: grid; grid-template-columns: 350px 1fr; min-height: 80vh; overflow: hidden; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); border: 5px solid #fff; }
+        .profile-box { max-width: 1100px; margin: 40px auto; background: #fff; border-radius: 30px; box-shadow: 0 30px 80px rgba(0,0,0,0.2); display: grid; grid-template-columns: 350px 1fr; min-height: 70vh; overflow: hidden; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); border: 5px solid #fff; }
         @keyframes slideUp { from {transform:translateY(100px); opacity:0;} to {transform:translateY(0); opacity:1;} }
         .left-col { background: #FDF7F5; padding: 40px; text-align: center; border-right: 1px solid #eee; }
         .p-avatar { width: 200px; height: 200px; border-radius: 50%; border: 8px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin: 0 auto 20px; object-fit: cover; }
         .sub-imgs { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
         .sub-img { width: 100%; height: 140px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: 0.3s; }
-        .right-col { padding: 40px; }
+        .sub-img:hover { transform: scale(1.05); }
+        .right-col { padding: 40px; display: flex; flex-direction: column; }
         .p-name { font-family: 'Cinzel', serif; font-size: 3rem; color: var(--accent-dark); margin-bottom: 10px; line-height: 1.1; }
-        .p-quote { font-style: italic; color: #999; margin-bottom: 20px; display: block; }
-        .notebook { 
-            width: 100%; min-height: 150px; padding: 10px; margin-bottom: 20px;
-            background-image: linear-gradient(#e5e5e5 1px, transparent 1px);
-            background-size: 100% 2em; line-height: 2em; border: 1px solid #eee; color: #555; font-size: 1.1rem; font-family: 'Indie Flower', cursive;
-        }
+        .p-quote { font-style: italic; color: #999; margin-bottom: 30px; display: block; }
+        .notebook { width: 100%; min-height: 150px; padding: 10px; margin-bottom: 20px; background-image: linear-gradient(#e5e5e5 1px, transparent 1px); background-size: 100% 2em; line-height: 2em; border: 1px solid #eee; color: #555; font-size: 1.1rem; font-family: 'Indie Flower', cursive; }
         .close-btn { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; z-index: 10; }
-        
+        .close-btn:hover { background: var(--accent); color: white; }
+
         /* Comment Section */
         .comment-section { border-top: 2px dashed #eee; padding-top: 20px; flex-grow: 1; display: flex; flex-direction: column; }
         .cmt-title { font-weight: bold; color: var(--accent); margin-bottom: 15px; font-size: 1.2rem; }
@@ -101,7 +135,7 @@
         .cmt-input-text { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
         .btn-cmt { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; flex-shrink: 0; }
 
-        /* Admin & Login */
+        /* Admin */
         .edit-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; color: white; font-size: 1.5rem; cursor: pointer; transition: 0.2s; }
         .del-btn, .add-btn { display: none; }
         body.is-admin [contenteditable="false"] { border: 1px dashed var(--accent); background: rgba(255,255,0,0.05); cursor: text; }
@@ -118,43 +152,18 @@
         .acc-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
         .btn-edit-pass { padding: 2px 10px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
 
-        /* =========================================
-           MOBILE OPTIMIZATIONS (MEDIA QUERIES)
-           ========================================= */
-        @media (max-width: 1024px) {
-            .grid { grid-template-columns: repeat(4, 1fr); }
-        }
+        /* Media Queries for Mobile */
+        @media (max-width: 1024px) { .grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 768px) {
-            header { margin-top: 30px; }
-            h1 { font-size: 2.2rem; }
-            .class-frame { height: 250px; }
-            
-            /* Chuyển Memories thành 1 cột */
+            header { margin-top: 30px; } h1 { font-size: 2.2rem; } .class-frame { height: 250px; }
             .memories-grid { grid-template-columns: 1fr; gap: 30px; margin-top: 30px; }
-            .polaroids { gap: 5px; }
-            .polaroid { padding: 5px 5px 30px 5px; }
-            .polaroid img { height: 120px; }
-            
-            /* Grid học sinh 2 cột */
-            .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px; }
-            .card { padding: 10px; }
-            .c-avatar { width: 80px; height: 80px; }
-            
-            /* Profile Modal Mobile */
+            .polaroids { gap: 5px; } .polaroid { padding: 5px 5px 30px 5px; } .polaroid img { height: 120px; }
+            .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 10px; } .card { padding: 10px; } .c-avatar { width: 80px; height: 80px; }
             .profile-box { grid-template-columns: 1fr; height: auto; margin: 10px; width: 95%; min-height: 90vh; display: flex; flex-direction: column; }
-            .left-col { padding: 20px; border-right: none; border-bottom: 1px solid #eee; }
-            .right-col { padding: 20px; flex-grow: 1; }
-            .p-avatar { width: 150px; height: 150px; }
-            .p-name { font-size: 2rem; }
-            .sub-imgs { flex-direction: row; overflow-x: auto; }
-            .sub-img { width: 100px; height: 100px; flex-shrink: 0; }
-            
-            /* Comment Form Mobile */
-            .cmt-form { flex-direction: column; }
-            .cmt-input-name, .cmt-input-text, .btn-cmt { width: 100%; }
-            
-            /* Sticker Mobile */
-            .sticker { font-size: 1.5rem; } /* Bé lại đỡ che */
+            .left-col { padding: 20px; border-right: none; border-bottom: 1px solid #eee; } .right-col { padding: 20px; flex-grow: 1; } .p-avatar { width: 150px; height: 150px; } .p-name { font-size: 2rem; }
+            .sub-imgs { flex-direction: row; overflow-x: auto; } .sub-img { width: 100px; height: 100px; flex-shrink: 0; }
+            .cmt-form { flex-direction: column; } .cmt-input-name, .cmt-input-text, .btn-cmt { width: 100%; }
+            .sticker { font-size: 1.5rem; }
         }
     </style>
 </head>
@@ -188,6 +197,38 @@
         </div>
     </div>
 
+    <div class="chat-section animate-up" style="animation-delay: 0.3s;">
+        <div class="chat-container">
+            <div id="chatLoginView" class="chat-login-view">
+                <h2 style="color: var(--accent-dark);">💬 Trò Chuyện Lớp Học</h2>
+                <p style="color:#777">Đăng nhập để tham gia chat</p>
+                <input type="text" id="cUser" class="chat-input" placeholder="Tài khoản (Ví dụ: hs1)">
+                <input type="password" id="cPass" class="chat-input" placeholder="Mật khẩu">
+                <button class="btn-chat" onclick="chatLogin()">Đăng Nhập</button>
+                <p style="font-size: 0.8rem; color: #999; margin-top: 10px;">(Liên hệ Admin để lấy tài khoản)</p>
+            </div>
+            <div id="chatMainView" class="chat-main-view">
+                <div class="chat-header">
+                    <span>🟢 <span id="chatDisplayName">User</span></span>
+                    <span class="chat-logout" onclick="chatLogout()">Đăng xuất ↪</span>
+                </div>
+                <div id="chatList" class="chat-messages"></div>
+                <div class="chat-controls-wrapper">
+                    <div id="replyPreview" class="reply-preview">
+                        <span>Trả lời: <b id="replyUser">Name</b></span>
+                        <span onclick="cancelReply()" style="cursor:pointer; font-weight:bold;">✕</span>
+                    </div>
+                    <div class="chat-controls">
+                        <div class="input-group" style="width:100%">
+                            <input type="text" id="msgInput" class="msg-type-box" placeholder="Viết tin nhắn...">
+                            <button class="btn-send" onclick="sendMessage()">➤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="search-bar-container animate-up" style="animation-delay: 0.4s;">
         <input type="text" id="searchInput" class="search-input" placeholder="🔍 Tìm tên thành viên..." onkeyup="filterStudents()">
     </div>
@@ -212,7 +253,6 @@
                 <div id="pQuote" class="p-quote" contenteditable="false">Quote</div>
                 <div style="font-weight:bold; margin-top:10px; color:var(--accent)">📖 Thông tin / Mô tả:</div>
                 <div id="pNote" class="notebook" contenteditable="false">Viết vào đây...</div>
-                
                 <div class="comment-section">
                     <div class="cmt-title">📝 Lưu Bút Bạn Bè</div>
                     <div id="commentList" class="cmt-list"></div>
@@ -230,7 +270,7 @@
     <div class="login-modal" id="loginModal">
         <div class="login-box">
             <h3>Admin Login</h3>
-            <input type="password" id="passInput" class="login-input" placeholder="admin123">
+            <input type="password" id="passInput" class="login-input" placeholder="Nhập mật khẩu">
             <button onclick="login()" style="padding:10px 30px; background:var(--accent); color:white; border:none; border-radius:20px; cursor:pointer; margin-top:10px;">Vào</button>
             <div style="margin-top:10px; color:#999; cursor:pointer" onclick="closeLogin()">Hủy</div>
         </div>
@@ -244,7 +284,15 @@
     </div>
 
     <script>
-        const PASS = "admin123";
+        // CONFIG
+        const pubnub = new PubNub({
+            publishKey: 'pub-c-4d6275f6-3993-484a-9390-2b030f28f68e',
+            subscribeKey: 'sub-c-324329b9-3272-4222-a461-49265226552e',
+            uuid: "user_" + Math.random()
+        });
+        const CHANNEL = "lop12a1_v27_chat";
+
+        const PASS = "minhhoang1005";
         let isAdmin = false, curId = 0;
         const TOTAL_STUDENTS = 50;
 
@@ -257,16 +305,22 @@
                 avatar: "https://i.pinimg.com/originals/f1/0f/7b/f10f7b59f3d5ea31500908728362635c.jpg", 
                 subs: [], comments: []
             })),
-            customPasswords: {}
+            chatHistory: [], customPasswords: {}
         };
 
-        let db = JSON.parse(localStorage.getItem('yearbook_v26')) || defData;
+        let db = JSON.parse(localStorage.getItem('yearbook_v27')) || defData;
+        const specialUsers = { "mã hoàng": { pass: "123123", name: "Hoàng" } };
+        let studentAccounts = {}; for(let i=1; i<=TOTAL_STUDENTS; i++) { studentAccounts[`hs${i}`] = { pass: `pass${i}`, studentIndex: i-1 }; }
 
         window.onload = () => { 
             addStickers(); setupInteractiveStickers(); render(); applyBg(); 
+            checkChatSession(); 
+            pubnub.subscribe({ channels: [CHANNEL] });
+            pubnub.addListener({ message: (m) => { appendMessage(m.message); } });
         };
-        function save() { localStorage.setItem('yearbook_v26', JSON.stringify(db)); }
+        function save() { localStorage.setItem('yearbook_v27', JSON.stringify(db)); }
 
+        // --- STICKERS ---
         function addStickers() {
             const emojis = ["📸", "🌿", "🍄", "✨", "🧸", "🎀", "🎫", "📌", "🌸", "🍉", "🎨", "🎻", "🚀", "🍕", "🍩", "⭐", "🚲", "📚"];
             const container = document.getElementById('stickers');
@@ -290,47 +344,85 @@
             document.addEventListener('mousemove', (e) => {
                 stickers.forEach(s => {
                     const rect = s.getBoundingClientRect();
-                    const x = rect.left + rect.width/2;
-                    const y = rect.top + rect.height/2;
+                    const x = rect.left + rect.width/2; const y = rect.top + rect.height/2;
                     const dist = Math.hypot(e.clientX - x, e.clientY - y);
                     if(dist < 80) {
                         const angle = Math.atan2(e.clientY - y, e.clientX - x);
                         const force = (80 - dist) / 2;
-                        const moveX = -Math.cos(angle) * force;
-                        const moveY = -Math.sin(angle) * force;
+                        const moveX = -Math.cos(angle) * force; const moveY = -Math.sin(angle) * force;
                         s.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.1)`;
                     } else { s.style.transform = `translate(0, 0) rotate(${Math.random()*10}deg)`; }
                 });
             });
         }
 
+        // --- CHAT ---
+        let currentChatUser = null; let replyingTo = null;
+        function chatLogin() {
+            const u = document.getElementById('cUser').value.toLowerCase().trim();
+            const p = document.getElementById('cPass').value;
+            if(specialUsers[u] && specialUsers[u].pass === p) { loginSuccess(specialUsers[u].name); return; }
+            if(u.startsWith('hs')) {
+                const idx = parseInt(u.replace('hs','')) - 1;
+                if(idx >= 0 && idx < TOTAL_STUDENTS) {
+                    const realPass = db.customPasswords[u] || ('pass' + (idx+1));
+                    if(p === realPass) { loginSuccess(db.students[idx].name); return; }
+                }
+            }
+            alert("Sai tài khoản hoặc mật khẩu!");
+        }
+        function loginSuccess(name) { currentChatUser = name; sessionStorage.setItem('chatUser', currentChatUser); showChatInterface(); }
+        function checkChatSession() { if(sessionStorage.getItem('chatUser')) { currentChatUser = sessionStorage.getItem('chatUser'); showChatInterface(); } }
+        function showChatInterface() { document.getElementById('chatLoginView').style.display='none'; document.getElementById('chatMainView').style.display='flex'; document.getElementById('chatDisplayName').innerText=currentChatUser; renderMessages(); }
+        function chatLogout() { sessionStorage.removeItem('chatUser'); document.getElementById('chatMainView').style.display='none'; document.getElementById('chatLoginView').style.display='flex'; document.getElementById('cPass').value=''; }
+        function sendMessage() {
+            const input = document.getElementById('msgInput'); const text = input.value.trim();
+            if(text && currentChatUser) {
+                const msgData = { sender: currentChatUser, text: text, time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), reply: replyingTo };
+                pubnub.publish({ channel: CHANNEL, message: msgData });
+                db.chatHistory.push(msgData); save(); cancelReply(); input.value = '';
+            }
+        }
+        function appendMessage(data) {
+            const list = document.getElementById('chatList'); const isMe = data.sender === currentChatUser;
+            let replyHtml = data.reply ? `<div class="msg-quote"><b>${data.reply.sender}:</b> ${data.reply.text.substring(0, 30)}...</div>` : '';
+            const safeText = data.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeSender = data.sender.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const html = `<div class="msg-row ${isMe ? 'me' : 'other'}">${!isMe ? `<img class="chat-avatar-small" src="https://ui-avatars.com/api/?name=${safeSender}&background=random">` : ''}<div class="msg ${isMe ? 'me' : 'other'}">${!isMe ? `<span class="msg-sender-name">${safeSender}</span>` : ''}<div class="msg-bubble">${replyHtml}${safeText}<div style="font-size:0.6rem; opacity:0.5; text-align:right; margin-top:2px;">${data.time}</div><span class="msg-actions" onclick="startReply('${safeSender}', '${safeText.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">↩</span></div></div></div>`;
+            list.insertAdjacentHTML('beforeend', html); setTimeout(() => { list.scrollTop = list.scrollHeight; }, 100);
+        }
+        function renderMessages() { const list = document.getElementById('chatList'); list.innerHTML = ''; db.chatHistory.slice(-50).forEach(msg => appendMessage(msg)); setTimeout(() => { list.scrollTop = list.scrollHeight; }, 100); }
+        window.startReply = (s,t) => { replyingTo={sender:s, text:t}; document.getElementById('replyPreview').style.display='flex'; document.getElementById('replyUser').innerText=s; document.getElementById('msgInput').focus(); };
+        window.cancelReply = () => { replyingTo=null; document.getElementById('replyPreview').style.display='none'; };
+        document.getElementById('msgInput').addEventListener('keypress', e=>{if(e.key==='Enter') sendMessage()});
+
+        // --- MAIN FUNCTIONS ---
+        function render() { document.getElementById('clsTitle').innerText = db.title; document.getElementById('mainPhoto').src = db.main; for(let i=0; i<3; i++) { document.getElementById(`mImg${i+1}`).src = db.memImgs[i]; document.getElementById(`note${i+1}`).innerText = db.notes[i]; } const g = document.getElementById('grid'); g.innerHTML = ''; db.students.forEach((s, i) => { g.innerHTML += `<div class="card animate-up" style="animation-delay: ${i*0.02}s" onclick="openProfile(${i})"><div class="c-avatar"><img src="${s.avatar}"></div><div class="c-name">${s.name}</div></div>`; }); }
+        function filterStudents() { const term = document.getElementById('searchInput').value.toLowerCase(); const cards = document.querySelectorAll('.card'); db.students.forEach((s, i) => { cards[i].style.display = s.name.toLowerCase().includes(term) ? 'block' : 'none'; }); }
+        function applyBg() { if(db.bg) document.body.style.backgroundImage = `url('${db.bg}')`; }
+        function openProfile(i) { curId = i; const s = db.students[i]; document.getElementById('pAvatar').src = s.avatar; document.getElementById('pName').innerText = s.name; document.getElementById('pQuote').innerText = s.quote; document.getElementById('pNote').innerText = s.note; renderSubs(); renderComments(i); updateEdit(); document.getElementById('profileModal').style.display = 'block'; }
+        function renderSubs() { const c = document.getElementById('subList'); c.innerHTML = ''; db.students[curId].subs.forEach((src, idx) => { c.innerHTML += `<div style="position:relative"><img class="sub-img" src="${src}"><button class="del-btn" onclick="delSub(${idx})">×</button></div>`; }); }
+        function closeModal() { document.getElementById('profileModal').style.display='none'; render(); }
+        function clickUpload(id) { if(isAdmin) document.getElementById(id).click(); }
+        function read(inp, cb) { if(inp.files[0]){ const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(inp.files[0]); } }
+        function changeBg(i) { read(i, r=>{ db.bg=r; applyBg(); save(); }); }
+        function changeMain(i) { read(i, r=>{ db.main=r; render(); save(); }); }
+        function changeMem(i, idx) { read(i, r=>{ db.memImgs[idx]=r; render(); save(); }); }
+        function changeAvatar(i) { read(i, r=>{ db.students[curId].avatar=r; document.getElementById('pAvatar').src=r; save(); }); }
+        function addSub(i) { read(i, r=>{ if(db.students[curId].subs.length<3){ db.students[curId].subs.push(r); renderSubs(); save(); } else alert("Max 3!"); }); }
+        window.delSub = (idx) => { if(confirm("Xóa?")){ db.students[curId].subs.splice(idx,1); renderSubs(); save(); } }
+        ['clsTitle', 'note1', 'note2', 'note3', 'pName', 'pQuote', 'pNote'].forEach(id => { document.getElementById(id).addEventListener('blur', function() { if(!isAdmin) return; const val = this.innerText; if(id==='clsTitle') db.title = val; else if(id.includes('note') && id.length===5) db.notes[parseInt(id.replace('note',''))-1] = val; else { let k = id.replace('p','').toLowerCase(); if(k==='name') k='name'; db.students[curId][k] = val; } save(); }); });
+        
         function renderComments(idx) {
             const list = document.getElementById('commentList'); list.innerHTML = '';
             if(!db.students[idx].comments) db.students[idx].comments = [];
-            db.students[idx].comments.forEach((c, cIdx) => {
-                list.innerHTML += `
-                    <div class="cmt-item">
-                        <div class="cmt-header"><span class="cmt-sender">${c.name}</span> <span>${c.time}</span></div>
-                        <div class="cmt-text">${c.text}</div>
-                        <span class="cmt-delete" onclick="deleteComment(${cIdx})">✖</span>
-                    </div>`;
-            });
+            db.students[idx].comments.forEach((c, cIdx) => { list.innerHTML += `<div class="cmt-item"><div class="cmt-header"><span class="cmt-sender">${c.name}</span> <span>${c.time}</span></div><div class="cmt-text">${c.text}</div><span class="cmt-delete" onclick="deleteComment(${cIdx})">✖</span></div>`; });
         }
-
         function postComment() {
-            const name = document.getElementById('cmtName').value.trim() || "Ẩn danh";
-            const text = document.getElementById('cmtText').value.trim();
-            if(text) {
-                const newCmt = { name: name, text: text, time: new Date().toLocaleDateString() };
-                if(!db.students[curId].comments) db.students[curId].comments = [];
-                db.students[curId].comments.push(newCmt);
-                save(); renderComments(curId); document.getElementById('cmtText').value = '';
-            }
+            const name = document.getElementById('cmtName').value.trim() || "Ẩn danh"; const text = document.getElementById('cmtText').value.trim();
+            if(text) { const newCmt = { name: name, text: text, time: new Date().toLocaleDateString() }; if(!db.students[curId].comments) db.students[curId].comments = []; db.students[curId].comments.push(newCmt); save(); renderComments(curId); document.getElementById('cmtText').value = ''; }
         }
-
-        window.deleteComment = function(cIdx) {
-            if(confirm("Xóa bình luận này?")) { db.students[curId].comments.splice(cIdx, 1); save(); renderComments(curId); }
-        }
+        window.deleteComment = function(cIdx) { if(confirm("Xóa bình luận này?")) { db.students[curId].comments.splice(cIdx, 1); save(); renderComments(curId); } }
 
         function loginToggle() { if(isAdmin){ isAdmin=false; updateUI(); } else document.getElementById('loginModal').style.display='flex'; }
         function closeLogin() { document.getElementById('loginModal').style.display='none'; }
@@ -354,22 +446,6 @@
         window.editPass = function(username) { const newPass = prompt(`Nhập mật khẩu mới cho ${username}:`); if(newPass) { db.customPasswords[username] = newPass; save(); alert(`Đã đổi mật khẩu ${username} thành: ${newPass}`); showAccList(); } }
         function closeAccList() { document.getElementById('accListModal').style.display = 'none'; }
         function updateEdit() { ['clsTitle', 'note1', 'note2', 'note3', 'pName', 'pQuote', 'pNote'].forEach(id => document.getElementById(id).contentEditable = isAdmin); }
-
-        function render() { document.getElementById('clsTitle').innerText = db.title; document.getElementById('mainPhoto').src = db.main; for(let i=0; i<3; i++) { document.getElementById(`mImg${i+1}`).src = db.memImgs[i]; document.getElementById(`note${i+1}`).innerText = db.notes[i]; } const g = document.getElementById('grid'); g.innerHTML = ''; db.students.forEach((s, i) => { g.innerHTML += `<div class="card animate-up" style="animation-delay: ${i*0.02}s" onclick="openProfile(${i})"><div class="c-avatar"><img src="${s.avatar}"></div><div class="c-name">${s.name}</div></div>`; }); }
-        function filterStudents() { const term = document.getElementById('searchInput').value.toLowerCase(); const cards = document.querySelectorAll('.card'); db.students.forEach((s, i) => { cards[i].style.display = s.name.toLowerCase().includes(term) ? 'block' : 'none'; }); }
-        function applyBg() { if(db.bg) document.body.style.backgroundImage = `url('${db.bg}')`; }
-        function openProfile(i) { curId = i; const s = db.students[i]; document.getElementById('pAvatar').src = s.avatar; document.getElementById('pName').innerText = s.name; document.getElementById('pQuote').innerText = s.quote; document.getElementById('pNote').innerText = s.note; renderSubs(); renderComments(i); updateEdit(); document.getElementById('profileModal').style.display = 'block'; }
-        function renderSubs() { const c = document.getElementById('subList'); c.innerHTML = ''; db.students[curId].subs.forEach((src, idx) => { c.innerHTML += `<div style="position:relative"><img class="sub-img" src="${src}"><button class="del-btn" onclick="delSub(${idx})">×</button></div>`; }); }
-        function closeModal() { document.getElementById('profileModal').style.display='none'; render(); }
-        function clickUpload(id) { if(isAdmin) document.getElementById(id).click(); }
-        function read(inp, cb) { if(inp.files[0]){ const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(inp.files[0]); } }
-        function changeBg(i) { read(i, r=>{ db.bg=r; applyBg(); save(); }); }
-        function changeMain(i) { read(i, r=>{ db.main=r; render(); save(); }); }
-        function changeMem(i, idx) { read(i, r=>{ db.memImgs[idx]=r; render(); save(); }); }
-        function changeAvatar(i) { read(i, r=>{ db.students[curId].avatar=r; document.getElementById('pAvatar').src=r; save(); }); }
-        function addSub(i) { read(i, r=>{ if(db.students[curId].subs.length<3){ db.students[curId].subs.push(r); renderSubs(); save(); } else alert("Max 3!"); }); }
-        window.delSub = (idx) => { if(confirm("Xóa?")){ db.students[curId].subs.splice(idx,1); renderSubs(); save(); } }
-        ['clsTitle', 'note1', 'note2', 'note3', 'pName', 'pQuote', 'pNote'].forEach(id => { document.getElementById(id).addEventListener('blur', function() { if(!isAdmin) return; const val = this.innerText; if(id==='clsTitle') db.title = val; else if(id.includes('note') && id.length===5) db.notes[parseInt(id.replace('note',''))-1] = val; else { let k = id.replace('p','').toLowerCase(); if(k==='name') k='name'; db.students[curId][k] = val; } save(); }); });
         document.getElementById('passInput').addEventListener('keypress', e=>{if(e.key==='Enter') login()});
     </script>
 </body>
